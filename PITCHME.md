@@ -93,6 +93,7 @@ println(listOfDuplicates("La", 8))  // List(La, La, La, La, La, La, La, La)
 - przypadek pierwszy -> wywołujemy metodę polimorficzną i określamy jej typ z góry
 - przypadek drugi -> w Scali nie jest wymagane jawne podanie typu metody polimorficznej. W tym przypadku kompilator wniosku typ danej metody bazując na typach podanych w argumentach.
 ---
+
 # Górne ograniczenia typów
 ---
 # Dolne ograniczenia typów
