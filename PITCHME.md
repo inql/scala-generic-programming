@@ -22,7 +22,7 @@ https://docs.scala-lang.org/tour/polymorphic-methods.html
 https://docs.scala-lang.org/tour/upper-type-bounds.html
 - Dolne ograniczenia typów
 https://docs.scala-lang.org/tour/lower-type-bounds.html
-- Wariacje
+- Wariancje
 https://docs.scala-lang.org/tour/variances.html
 - Biblioteka Shapeless
 https://jto.github.io/articles/getting-started-with-shapeless/
@@ -74,6 +74,8 @@ stack.push(banana)
 - Podtypowanie typów generycznych jest domyślnie określane jako niezmienne. Oznacza to tyle, że w sytuacji gdy mamy dwie klasy o danych typach np. MyClass[T] i MyClass[S] to MyClass[T] jest podtypem klasy MyClass[S] tylko wtedy gdy S = T
 ---
 # Metody polimorficzne
+---
+
 ```scala
 def listOfDuplicates[A](x: A, length: Int): List[A] = {
   if (length < 1)
@@ -93,12 +95,60 @@ println(listOfDuplicates("La", 8))  // List(La, La, La, La, La, La, La, La)
 - przypadek pierwszy -> wywołujemy metodę polimorficzną i określamy jej typ z góry
 - przypadek drugi -> w Scali nie jest wymagane jawne podanie typu metody polimorficznej. W tym przypadku kompilator wniosku typ danej metody bazując na typach podanych w argumentach.
 ---
-
 # Górne ograniczenia typów
+```scala
+abstract class Animal {
+ def name: String
+}
+
+abstract class Pet extends Animal {}
+
+class Cat extends Pet {
+  override def name: String = "Cat"
+}
+
+class Dog extends Pet {
+  override def name: String = "Dog"
+}
+
+class Lion extends Animal {
+  override def name: String = "Lion"
+}
+
+class Cage[P <: Pet](p: P) {
+  def pet: P = p
+}
+```
 ---
 # Dolne ograniczenia typów
 ---
-# Wariacje
+# Wariancje
+---
+```scala
+class Stack[+T] {
+  def push[S >: T](elem: S): Stack[S] = new Stack[S] {
+    override def top: S = elem
+    override def pop: Stack[S] = Stack.this
+    override def toString: String =
+      elem.toString + " " + Stack.this.toString
+  }
+  def top: T = sys.error("no element on stack")
+  def pop: Stack[T] = sys.error("no element on stack")
+  override def toString: String = ""
+}
+```
+- dodawane podczas definiowania abstrakcji klasy (a nie jej użytkowników jak ma to miejsce w Javie)
+- Adnotacja +T określa typ T tak, aby mógł być zastosowany wyłącznie w pozycji kowariantnej. 
+- oznacza to, że Stack[T] jest podtypem Stack[S] jeżeli T jest podtypem S. 
+---
+## Przykład użycia
+```scala
+  var s: Stack[Any] = new Stack().push("hello")
+  s = s.push(new Object())
+  s = s.push(7)
+```
+- typ Object jest w pozycji kowariantnej (jest podtypem) typu Any więc może być użyty w naszej implementacji
+- jako że typ Any jest rodzicem wszystkich typów w Scali, na stos możemy też umieścić typ Int
 ---
 # Biblioteka Shapeless
 ---
