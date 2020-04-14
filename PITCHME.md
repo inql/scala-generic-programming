@@ -17,15 +17,10 @@ footer: 'Dawid Bińkuś'
 - Wprowadzenie
 - Klasy generyczne
 - Metody polimorficzne
-https://docs.scala-lang.org/tour/polymorphic-methods.html
 - Górne ograniczenia typów
-https://docs.scala-lang.org/tour/upper-type-bounds.html
 - Dolne ograniczenia typów
-https://docs.scala-lang.org/tour/lower-type-bounds.html
 - Wariancje
-https://docs.scala-lang.org/tour/variances.html
 - Biblioteka Shapeless
-https://jto.github.io/articles/getting-started-with-shapeless/
 
 ---
 # Wprowadzenie
@@ -151,5 +146,46 @@ class Stack[+T] {
 - jako że typ Any jest rodzicem wszystkich typów w Scali, na stos możemy też umieścić typ Int
 ---
 # Biblioteka Shapeless
+- biblioteka skupiająca się na programowaniu generycznym i opartym na typach
+- rozwijana od 2011 roku
+
+- https://github.com/milessabin/shapeless
+- https://github.com/milessabin/shapeless/wiki
+
+---
+## Struktura HList
+```scala
+import shapeless.{ ::, HList, HNil }
+case class Meal(name: String)
+
+val list = 1 :: "String" :: Meal("Burger") :: HNil
+```
+- każdy element jest znany podczas kompilacji
+- dostępne są wszystkie metody charakterystyczne dla list (take, head, tail, map, zip etc.)
+---
+### Przykład użycia
+```scala
+val stringValue = list.select[String] //zwraca "String" jako wartość typu String
+val intValue = list.head //zwraca 1 jako wartość typu Int
+val intV :: stringV :: mealV :: HNil = list //przykład zastosowania pattern matching
+val listV = list.select[List[Int]] //błąd kompilacji, lista nie zawiera danych tego typu
+```
+---
+## Zastosowanie 
+---
+## Funkcje polimorficzne z wykorzystaniem biblioteki shapeless
+```scala
+import shapeless.Poly1
+
+object getLength extends Poly1{
+  implicit def default[T] = at[T](t => 1)
+  implicit def caseInt = at[Int](x => 1.toString.length)
+  implicit def caseString = at[String](_.length)
+  implicit def caseMeal = at[Meal](_.name.length)
+}
+
+getLength(list) //13
+```
+- dzięki zastosowaniu interfejsu Poly1 z biblioteki Shapeless byliśmy w stanie dostosować działanie metody dla różnych typów w obrębie jednej kolekcji.
 ---
 # Dziękuję za uwagę
