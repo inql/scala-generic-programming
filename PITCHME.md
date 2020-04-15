@@ -115,7 +115,84 @@ class Cage[P <: Pet](p: P) {
 }
 ```
 ---
+## Zastosowanie
+```scala
+object Main extends App {
+  val cat = new Cat
+  val dog = new Dog
+  val lion = new Lion
+  val catCage = new Cage[Pet](cat)
+  val dogCage = new Cage[Dog](dog)
+  val lionCage = new Cage[Lion](lion) 
+  //type arguments [Lion] do not conform to class Cage's type parameter bounds [P <: Pet]
+}
+```
+- ograniczenie klasy Cage przez P <: Pet spowodowało że klasa Lion dziedzicząca po Animal nie spełnia warunków utworzenia klasy
+---
 # Dolne ograniczenia typów
+```scala
+class Cage[P >: Pet](p: P){
+  def pet: P = p
+}
+
+object Main extends App {
+  val cat = new Cat
+  val dog = new Dog
+  val lion = new Lion
+  val anyRef = new AnyRef
+  val catCage = new Cage[Pet](cat)
+  val dogCage = new Cage[Dog](dog)
+  //błąd!
+  val lionCage = new Cage[Lion](lion)
+  //błąd!
+  val anyRefCage = new Cage[AnyRef](anyRef)
+}
+```
+---
+- Ograniczenie P :> Pet powoduje że dany typ może być maksymalnie na poziomie typu Pet
+- Dlatego też wszystkie standardowe typy w scali (np. AnyRef) są przez nią przyjmowane
+---
+### Ograniczenia typoów można ze sobą łączyć
+```scala
+abstract class Animal {
+  def name: String
+}
+
+abstract class Pet extends Animal {}
+
+class Cat extends Pet {
+  override def name: String = "Cat"
+}
+
+class Dog extends Pet {
+  override def name: String = "Dog"
+}
+
+class Lion extends WildAnimal {
+  override def name: String = "Lion"
+}
+
+class WildAnimal extends Animal {
+  override def name: String = "Wild animal"
+}
+```
+---
+```scala
+class Cage[P >: Lion <: Animal](p: P){
+  def pet: P = p
+}
+
+object Main extends App {
+  val dog = new Dog
+  val lion = new Lion
+  val anyRef = new AnyRef
+  val wildAnimal = new WildAnimal
+  val dogCage = new Cage[Dog](dog) //błąd!
+  val lionCage = new Cage[Lion](lion) //ok
+  val anyRefCage = new Cage[AnyRef](anyRef) //błąd!
+  val wildAnimalCage = new Cage[WildAnimal](wildAnimal) //ok
+}
+```
 ---
 # Wariancje
 ---
@@ -171,8 +248,6 @@ val intV :: stringV :: mealV :: HNil = list //przykład zastosowania pattern mat
 val listV = list.select[List[Int]] //błąd kompilacji, lista nie zawiera danych tego typu
 ```
 ---
-## Zastosowanie 
----
 ## Funkcje polimorficzne z wykorzystaniem biblioteki shapeless
 ```scala
 import shapeless.Poly1
@@ -187,5 +262,50 @@ object getLength extends Poly1{
 getLength(list) //13
 ```
 - dzięki zastosowaniu interfejsu Poly1 z biblioteki Shapeless byliśmy w stanie dostosować działanie metody dla różnych typów w obrębie jednej kolekcji.
+---
+## Coproduct
+- rozwinięcie konceptu Either znanego ze standardowej Scali
+- wspiera większość standardowych operacji (map, select, union)
+---
+### Either
+```scala
+scala> def div(x: Int, y: Int): Either[String, Int] = {
+     | if (y == 0) Left("Wrong value provided")
+     | else Right(x/y)
+     | }
+div: (x: Int, y: Int)Either[String,Int]
+
+scala> div(1,0)
+res2: Either[String,Int] = Left(Wrong value provided)
+
+scala> div(1,1)
+res3: Either[String,Int] = Right(1)
+```
+- Either umożliwia nam operowanie tylko na dwóch typach.
+---
+### Przykład użycia Coproduct
+```scala
+type ISB = Int :+: String :+: Boolean :+: CNil
+
+val isbString = Coproduct[ISB]("test")
+val isbInt = Coproduct[ISB](2)
+val isbBoolean = Coproduct[ISB](True)
+
+isbString.select[String] //zwróci Some("test")
+isbString.select[Int] //zwróci None
+isbString.select[Boolean] //zwróci None
+```
+---
+### Przykład użycia z funkcją map
+```scala
+object size extends Poly1 {
+  implicit def caseInt = at[Int](i => (i,i))
+  implicit def caseString = at[String](s => (s,s.length))
+  implicit def caseBoolean = at[Boolean](b => (b,1))
+}
+isbString map size //zwróci ("test",4)
+isbInt map size //zwróci (2,2)
+isbBoolean map size //zwróci (True,1)
+```
 ---
 # Dziękuję za uwagę
