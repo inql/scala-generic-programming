@@ -14,7 +14,6 @@ footer: 'Dawid Bińkuś'
 
 ---
 # Zagadnienia
-- Wprowadzenie
 - Klasy generyczne
 - Metody polimorficzne
 - Górne ograniczenia typów
@@ -22,8 +21,6 @@ footer: 'Dawid Bińkuś'
 - Wariancje
 - Biblioteka Shapeless
 
----
-# Wprowadzenie
 ---
 # Klasy generyczne
 ```scala
@@ -197,30 +194,53 @@ object Main extends App {
 # Wariancje
 ---
 ```scala
-class Stack[+T] {
-  def push[S >: T](elem: S): Stack[S] = new Stack[S] {
-    override def top: S = elem
-    override def pop: Stack[S] = Stack.this
-    override def toString: String =
-      elem.toString + " " + Stack.this.toString
-  }
-  def top: T = sys.error("no element on stack")
-  def pop: Stack[T] = sys.error("no element on stack")
-  override def toString: String = ""
-}
+class Animal
+class Pet extends Animal
+class NonPet extends Animal
+class Dog extends Pet
+class Cat extends Pet
+class Husky extends Dog
+class Fox extends NonPet
+```
+---
+## Kowariancja
+![alt text](https://cdn.journaldev.com/wp-content/uploads/2015/11/scala-covariant-450x340.png)
+- Jeśli "S" jest podtypem "T", to wtedy List[S] jest podtypem List[T]
+---
+```scala
+class CovariantCage[+T]
 ```
 - dodawane podczas definiowania abstrakcji klasy (a nie jej użytkowników jak ma to miejsce w Javie)
 - Adnotacja +T określa typ T tak, aby mógł być zastosowany wyłącznie w pozycji kowariantnej. 
-- oznacza to, że Stack[T] jest podtypem Stack[S] jeżeli T jest podtypem S. 
+- oznacza to, że CovariantCage[T] jest podtypem CovariantCage[S] jeżeli T jest podtypem S. 
 ---
-## Przykład użycia
 ```scala
-  var s: Stack[Any] = new Stack().push("hello")
-  s = s.push(new Object())
-  s = s.push(7)
+val dogCage: CovariantCage[Dog] = new CovariantCage[Dog]
+val huskyCage: CovariantCage[Dog] = new CovariantCage[Husky]
+val petCage: CovariantCage[Dog] = new CovariantCage[Pet] //error
 ```
-- typ Object jest w pozycji kowariantnej (jest podtypem) typu Any więc może być użyty w naszej implementacji
-- jako że typ Any jest rodzicem wszystkich typów w Scali, na stos możemy też umieścić typ Int
+- typ Husky jest w pozycji kowariantnej (jest podtypem) typu Dog więc może być użyty w naszej implementacji
+- typ Pet jest rodzicem typu Dog więc nie może zostać użyty w tym kontekście i powoduje błąd kompilacji
+---
+## Kontrawariancja
+![alt text](https://cdn.journaldev.com/wp-content/uploads/2015/11/scala-contravariance-450x338.png)
+- Jeśli "S" jest podtypem "T", to wtedy List[T] jest podtypem List[S]
+---
+```scala
+class ContravariantCage[-T]
+```
+- Adnotacja -T określa typ T tak, aby mógł być zastosowany wyłącznie w pozycji kontrawariantnej.
+- Oznacza to, że ContravariantCage[T] jest podtypem ContravariantCage[S] jeżeli S jest podtypem T.
+---
+```scala
+val dogCage: ContravariantCage[Dog] = new ContravariantCage[Dog]
+val petCage: ContravariantCage[Dog] = new ContravariantCage[Pet]
+val foxCage: ContravariantCage[Fox] = new ContravariantCage[Animal]
+val huskyCage: ContravariantCage[Dog] = new ContravariantCage[Husky] //error
+val catCage: ContravariantCage[Dog] = new ContravariantCage[Cat] //error
+```
+- typ Pet jest w pozycji kontrawariantnej (jest nadtypem) typu Dog więc może być użyty w naszej implementacji
+- typ Husky jest podtypem typu Dog więc nie spełnia warunków i powoduje błąd kompilacji.
 ---
 # Biblioteka Shapeless
 - biblioteka skupiająca się na programowaniu generycznym i opartym na typach
